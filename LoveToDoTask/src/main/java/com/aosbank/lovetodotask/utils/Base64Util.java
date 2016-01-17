@@ -91,7 +91,7 @@ public class Base64Util {
     
     
     public static void main(String[] args) {
-		System.out.println(encode(1));
+		System.out.println(encode(2));
 	}
  
 }

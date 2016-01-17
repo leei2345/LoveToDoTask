@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.fastjson.JSON;
 import com.aosbank.lovetodotask.dao.MysqlDao;
 import com.aosbank.lovetodotask.dao.RedisDao;
 import com.aosbank.lovetodotask.utils.Base64Util;
@@ -74,5 +75,33 @@ public class BaseController {
 		return userInfoMap;
 	}
 	
+	public String reorganizeRes (Map<String, Object> resMap, responseStatus status) {
+		Map<String, Object> res = new HashMap<String, Object>();
+		res.put("result", resMap);
+		res.put("status", status.status);
+		res.put("msg", status.msg);
+		res.put("desc", status.toString());
+		return JSON.toJSONString(res);
+	}
+	
+	
+}
+
+enum responseStatus {
+	need_relogin(1, "需要重新微信登录"),
+	succuess(0, "成功"),
+	system_error(2, "系统错误"),
+	deficiency_of_integral(3, "积分不足"),
+	task_not_exist(4, "任务不存在"),
+	task_exist(5, "领取任务重复，同一任务只能领取一次"),
+	
+	;
+	
+	public int status;
+	public String msg;
+	private responseStatus (int status, String msg) {
+		this.status = status;
+		this.msg = msg;
+	}
 	
 }

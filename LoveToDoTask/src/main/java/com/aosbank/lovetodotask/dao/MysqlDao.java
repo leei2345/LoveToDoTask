@@ -125,6 +125,52 @@ public class MysqlDao {
 		return resList;
 	}
 	
+	public List<Map<String, String>> selectStringResult (String sql) {
+		List<Map<String, String>> resList = new ArrayList<Map<String, String>>();
+		DruidPooledConnection conn = null;
+		Statement statement = null;
+		ResultSet rs = null;
+		try {
+			conn = dataSource.getConnection();
+			statement = conn.createStatement();
+			rs = statement.executeQuery(sql);
+			while (rs.next()) {
+				ResultSetMetaData rsmd = rs.getMetaData();
+				int count = rsmd.getColumnCount();
+				Map<String, String> map = new HashMap<String, String>();
+				for (int index = 1; index <= count; index++) {
+					String key = rsmd.getColumnLabel(index);
+					Object value = rs.getObject(index);
+					String valueStr = String.valueOf(value);
+					map.put(key, valueStr);
+				}
+				resList.add(map);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (rs != null) 
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+	        if (statement != null)
+	        	try {
+	        		statement.close();
+	        	} catch (SQLException e) {
+	        		e.printStackTrace();
+	        	}
+	        if (conn != null)
+	        	try {
+	        		conn.close();
+	        	} catch (SQLException e) {
+	        		e.printStackTrace();
+	        	}
+		}
+		return resList;
+	}
+	
 	public int insertAndGetId (String sql) {
 		int insertId = 0;
 		DruidPooledConnection conn = null;

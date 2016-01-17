@@ -110,9 +110,10 @@ public class WeiXinOauth2Controller extends BaseController {
 			}
 			/** 用户登陆信息存储redis */
 			Map<String, String> userInfoMap = new HashMap<String, String>();
-			userInfoMap.put(User.nickName.toString(), nickName);
+			userInfoMap.put(User.nickname.toString(), nickName);
 			userInfoMap.put(User.sex.toString(),  sex + "");
 			userInfoMap.put(User.province.toString(), province);
+			userInfoMap.put(User.city.toString(), city);
 			userInfoMap.put(User.country.toString(), country);
 			userInfoMap.put(User.headimgurl.toString(), headimgurl);
 			userInfoMap.put(User.openid.toString(), openId);

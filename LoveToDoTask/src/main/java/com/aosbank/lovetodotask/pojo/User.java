@@ -1,7 +1,7 @@
 package com.aosbank.lovetodotask.pojo;
 
 public enum User {
-	nickName,
+	nickname,
 	sex,
 	province,
 	country,
@@ -9,6 +9,6 @@ public enum User {
 	openid,
 	accessToken,
 	score,
-	
+	city,
 	;
 }

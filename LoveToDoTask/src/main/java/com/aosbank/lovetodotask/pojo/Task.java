@@ -12,6 +12,7 @@ public class Task extends Base {
 	 */
 	private static final long serialVersionUID = 2200603322880906972L;
 	
+	private String uinfo;
 	private String task_info;
 	private String user_name;
 	private String app_name;
@@ -23,6 +24,12 @@ public class Task extends Base {
 	private int complate_count;
 	private String ctime;
 	
+	public String getUinfo() {
+		return uinfo;
+	}
+	public void setUinfo(String uinfo) {
+		this.uinfo = uinfo;
+	}
 	public int getTask_count() {
 		return task_count;
 	}

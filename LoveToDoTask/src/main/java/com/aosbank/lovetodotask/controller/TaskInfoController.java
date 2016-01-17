@@ -1,5 +1,7 @@
 package com.aosbank.lovetodotask.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -7,10 +9,12 @@ import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
@@ -22,9 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.alibaba.fastjson.JSON;
+import com.aosbank.lovetodotask.pojo.Receive;
 import com.aosbank.lovetodotask.pojo.Task;
 import com.aosbank.lovetodotask.utils.Base64Util;
+import com.aosbank.lovetodotask.utils.ConfigUtils;
 
 
 @Controller
@@ -34,6 +39,14 @@ public class TaskInfoController extends BaseController {
 	private static final String NEEDSCOREKEY = "EACHTASKNEEDSCORE";
 	private static final int EACHPAGECOUNT = 20;
 	private static FastDateFormat sim = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+	private static String imgPath;
+	private static File loadFialImgFile = null;
+	
+	static {
+		imgPath = ConfigUtils.getValue("img.path");
+		String path = TaskInfoController.class.getResource("").getPath() + "tempimg/localfail.jpg";
+		loadFialImgFile = new File(path);
+	}
 	
 	/**
 	 * 完成微信授权并获取用户id
@@ -44,38 +57,35 @@ public class TaskInfoController extends BaseController {
 	@RequestMapping(value="needScore", method=RequestMethod.GET)
 	public void getUserInfo (@RequestParam("uinfo") String useridEncode, @RequestParam("taskcount") String taskCount, HttpServletResponse response){
 		response.setHeader("Content-type", "application/json;charset=UTF-8");
-		if (StringUtils.isBlank(useridEncode)) {
-			String path = "../../index.jsp?msg=need_relogin";
-			try {
-				response.sendRedirect(path);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} 
-			return;
-		}
-		String needScore = confMap.get(NEEDSCOREKEY);
-		Map<String, String> resMap = new HashMap<String, String>();
-		try {
-			int eachScore = Integer.parseInt(needScore);
-			int count = Integer.parseInt(taskCount);
-			int holeScore = eachScore*count;
-			resMap.put("need_score", holeScore + "");
-		} catch (Exception e) {
-			String path = "../../index.jsp?msg=system_error";
-			try {
-				response.sendRedirect(path);
-			} catch (IOException in) {
-				in.printStackTrace();
-			} 
-			return;
-		}
 		PrintWriter writer = null;
 		try {
 			writer = response.getWriter();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		writer.write(JSON.toJSONString(resMap));
+		Map<String, Object> resMap = new HashMap<String, Object>();
+		if (StringUtils.isBlank(useridEncode)) {
+			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
+			writer.write(res);
+			writer.flush();
+			writer.close();
+			return;
+		}
+		String needScore = confMap.get(NEEDSCOREKEY);
+		try {
+			int eachScore = Integer.parseInt(needScore);
+			int count = Integer.parseInt(taskCount);
+			int holeScore = eachScore*count;
+			resMap.put("need_score", holeScore + "");
+		} catch (Exception e) {
+			String res = this.reorganizeRes(resMap, responseStatus.system_error);
+			writer.write(res);
+			writer.flush();
+			writer.close();
+			return;
+		}
+		String res = this.reorganizeRes(resMap, responseStatus.succuess);
+		writer.write(res);
 		writer.flush();
 		writer.close();
 	}
@@ -83,6 +93,14 @@ public class TaskInfoController extends BaseController {
 	@RequestMapping(value="submitTask", method=RequestMethod.POST)
 	public void submitTask (@RequestBody String reqBody, HttpServletResponse response) {
 		response.setHeader("Content-type", "application/json;charset=UTF-8");
+		PrintWriter writer = null;
+		try {
+			writer = response.getWriter();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<String, Object> resMap = new HashMap<String, Object>();
+		responseStatus status = responseStatus.succuess;
 		String[] reqParamsArr = reqBody.split("\\&");
 		Map<String, String> reqMap = new HashMap<String, String>();
 		for (String reqParam : reqParamsArr) {
@@ -100,16 +118,12 @@ public class TaskInfoController extends BaseController {
 		String uinfo = reqMap.get("uinfo");
 		int userid = Base64Util.decode(uinfo);
 		if (userid == 0) {
-			String path = "../../index.jsp?msg=need_relogin";
-			try {
-				response.sendRedirect(path);
-			} catch (IOException in) {
-				in.printStackTrace();
-			} 
+			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
+			writer.write(res);
+			writer.flush();
+			writer.close();
 			return;
 		}
-		Map<String, Object> resMap = new HashMap<String, Object>();
-		int status = 0;
 		String searchKeyword = reqMap.get("searchkeyword");
 		String appname = reqMap.get("appname");
 		int rankNum = 0;
@@ -125,18 +139,17 @@ public class TaskInfoController extends BaseController {
 		String selectScoreSql = "select score from tb_user where id=" + userid;
 		List<Map<String, Object>> scoreRes = dao.select(selectScoreSql);
 		if (scoreRes.size() == 0) {
-			String path = "../../index.jsp?msg=need_relogin";
-			try {
-				response.sendRedirect(path);
-			} catch (IOException in) {
-				in.printStackTrace();
-			} 
+			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
+			writer.write(res);
+			writer.flush();
+			writer.close();
 			return;
 		}
 		BigDecimal score = (BigDecimal) scoreRes.get(0).get("score");
 		if (score.intValue() < needScore) {
-			status = 1;
+			status = responseStatus.deficiency_of_integral;
 		} else {
+			TransactionStatus transStatus = dao.setTransactionStart();
 			String insertSql = "insert into tb_task (user_id,app_name,search_key,rank,comment_key,task_count,need_score,ctime) values "
 					+ "(" + userid + ",'" + appname + "','" + searchKeyword + "'," + rankNum + ",'" + comkeyword + "'," + taskCount + "," + needScore + ",now())";
 			boolean insertRes = dao.ExecuteSql(insertSql);
@@ -144,20 +157,19 @@ public class TaskInfoController extends BaseController {
 				String cutDownScoreSql = "update tb_user set  score=(score-" + needScore + ") where id=" + userid;
 				boolean cutDownScoreRes = dao.ExecuteSql(cutDownScoreSql);
 				if (!cutDownScoreRes) {
-					status = 3;
+					status = responseStatus.system_error;
+					dao.transRollback(transStatus);
+				} else {
+					dao.transCommit(transStatus);
+					redis.insertUserInfo(userid, null);
 				}
 			} else {
-				status = 2;
+				status = responseStatus.system_error;
+				dao.transRollback(transStatus);
 			}
 		}
-		resMap.put("res_status", status);
-		PrintWriter writer = null;
-		try {
-			writer = response.getWriter();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		writer.write(JSON.toJSONString(resMap));
+		String res = this.reorganizeRes(resMap, status);
+		writer.write(res);
 		writer.flush();
 		writer.close();
 	}
@@ -179,11 +191,14 @@ public class TaskInfoController extends BaseController {
 		} catch (Exception e) {
 		}
 		int start = (page -1)*EACHPAGECOUNT;
-		String selectSql = "select a.id,b.nickname,a.app_name,a.search_key,a.rank,a.comment_key,a.task_count,a.receive_count,a.complate_count,a.ctime from tb_task a left join tb_user b on a.user_id=b.id and a.receive_count<a.task_count order by a.ctime desc limit " + start + "," + EACHPAGECOUNT;
+		String selectSql = "select b.id as userid,a.id as taskid,b.nickname,a.app_name,a.search_key,a.rank,a.comment_key,a.task_count,a.receive_count,a.complate_count,a.ctime from tb_task a left join tb_user b on a.user_id=b.id and a.receive_count<a.task_count order by a.ctime desc limit " + start + "," + EACHPAGECOUNT;
 		List<Map<String, Object>> selectRes = dao.select(selectSql);
 		for (Map<String, Object> map : selectRes) {
 			Task task = new Task();
-			int taskid = (Integer) map.get("id");
+			int userid = (Integer) map.get("userid");
+			String eachUinfo = Base64Util.encode(userid);
+			task.setUinfo(eachUinfo);
+			int taskid = (Integer) map.get("taskid");
 			String eachTaskinfo = Base64Util.encode(taskid);
 			task.setTask_info(eachTaskinfo);
 			String uName = (String) map.get("nickname");
@@ -211,7 +226,8 @@ public class TaskInfoController extends BaseController {
 			taskList.add(task);
 		}
 		resMap.put("tasklist", taskList);
-		writer.write(JSON.toJSONString(resMap));
+		String res = this.reorganizeRes(resMap, responseStatus.succuess);
+		writer.write(res);
 		writer.flush();
 		writer.close();
 	}
@@ -219,6 +235,14 @@ public class TaskInfoController extends BaseController {
 	@RequestMapping(value="receiveTask", method=RequestMethod.POST)
 	public void receiveTask (@RequestBody String reqBody, HttpServletResponse response) {
 		response.setHeader("Content-type", "application/json;charset=UTF-8");
+		PrintWriter writer = null;
+		try {
+			writer = response.getWriter();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<String, Object> resMap = new HashMap<String, Object>();
+		responseStatus status = responseStatus.succuess;
 		String[] reqParamsArr = reqBody.split("\\&");
 		Map<String, String> reqMap = new HashMap<String, String>();
 		for (String reqParam : reqParamsArr) {
@@ -236,47 +260,154 @@ public class TaskInfoController extends BaseController {
 		String uinfo = reqMap.get("uinfo");
 		int userid = Base64Util.decode(uinfo);
 		if (userid == 0) {
-			String path = "../../index.jsp?msg=need_relogin";
-			try {
-				response.sendRedirect(path);
-			} catch (IOException in) {
-				in.printStackTrace();
-			} 
+			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
+			writer.write(res);
+			writer.flush();
+			writer.close();
 			return;
 		}
-		Map<String, Object> resMap = new HashMap<String, Object>();
-		int status = 0;
 		String taskInfo = reqMap.get("taskinfo");
 		int taskId = Base64Util.decode(taskInfo);
 		if (taskId == 0) {
-			status = 1;
+			status = responseStatus.task_not_exist;
 		} else {
-			TransactionStatus transStatus = dao.setTransactionStart();
-			String receiveTaskSql = "insert into tb_receive (task_id,receive_uid,ctime) values (" + taskId + "," + userid + ",now())";
-			boolean receiveTaskRes = dao.ExecuteSql(receiveTaskSql);
-			if (receiveTaskRes) {
-				String updateTaskSql = "update tb_task set receive_count=(receive_count-1) where id=" + taskId;
-				boolean updateTaskRes = dao.ExecuteSql(updateTaskSql);
-				if (updateTaskRes) {
-					dao.transCommit(transStatus);
+			String selectReveiveTaskSql = "select id from tb_receive where receive_uid=" + userid +" and task_id=" + taskId;
+			List<Map<String, Object>> selectReceiveTaskRes = dao.select(selectReveiveTaskSql);
+			if (selectReceiveTaskRes.size() > 0) {
+				status = responseStatus.task_exist;
+			} else {
+				TransactionStatus transStatus = dao.setTransactionStart();
+				String receiveTaskSql = "insert into tb_receive (task_id,receive_uid,ctime) values (" + taskId + "," + userid + ",now())";
+				boolean receiveTaskRes = dao.ExecuteSql(receiveTaskSql);
+				if (receiveTaskRes) {
+					String updateTaskSql = "update tb_task set receive_count=(receive_count+1) where id=" + taskId;
+					boolean updateTaskRes = dao.ExecuteSql(updateTaskSql);
+					if (updateTaskRes) {
+						dao.transCommit(transStatus);
+					} else {
+						dao.transRollback(transStatus);
+						status = responseStatus.system_error;
+					}
 				} else {
 					dao.transRollback(transStatus);
-					status = 2;
+					status = responseStatus.system_error;
 				}
 			}
 		}
-		resMap.put("res_status", status);
+		String res = this.reorganizeRes(resMap, status);
+		writer.write(res);
+		writer.flush();
+		writer.close();
+	}
+
+	@RequestMapping(value="receiveList", method=RequestMethod.GET)
+	public void getReceiveList (@RequestParam("page") String pageNum, @RequestParam("uinfo") String uInfo, HttpServletResponse response) {
+		response.setHeader("Content-type", "application/json;charset=UTF-8");
 		PrintWriter writer = null;
 		try {
 			writer = response.getWriter();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		writer.write(JSON.toJSONString(resMap));
+		Map<String, Object> resMap = new HashMap<String, Object>();
+		int userid = Base64Util.decode(uInfo);
+		if (userid == 0) {
+			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
+			writer.write(res);
+			writer.flush();
+			writer.close();
+			return;
+		}
+		List<Receive> receiveList = new ArrayList<Receive>();
+		int page = 1;
+		try {
+			page = Integer.parseInt(pageNum);
+		} catch (Exception e) {
+		}
+		int start = (page -1)*EACHPAGECOUNT;
+		String selectSql = "select a.id,a.task_id,a.receive_uid,a.img_id_list,a.utime,b.app_name,b.search_key,b.comment_key from tb_receive a left join tb_task b on a.task_id=b.id and b.user_id=" + userid + " and a.img_id_list is not null and a.audit_result=1 order by a.ctime limit " + start + "," + EACHPAGECOUNT;
+		List<Map<String, Object>> selectRes = dao.select(selectSql);
+		for (Map<String, Object> map : selectRes) {
+			Receive receive = new Receive();
+			int taskid = (Integer) map.get("task_id");
+			String taskInfo = Base64Util.encode(taskid);
+			receive.setTask_info(taskInfo);
+			int receiveid = (Integer) map.get("id");
+			String eachReceiveInfo = Base64Util.encode(receiveid);
+			receive.setReceive_info(eachReceiveInfo);
+			int receiveuid = (Integer) map.get("receive_uid");
+			String receiveUinfo = Base64Util.encode(receiveuid);
+			receive.setReceive_uinfo(receiveUinfo);
+			String receiveUname = redis.getUserName(receiveuid);
+			if (StringUtils.isBlank(receiveUname)) {
+				continue;
+			}
+			receive.setReceive_uname(receiveUname);
+			String imgIdListStr = (String) map.get("img_id_list");
+			String[] imgIdArr = imgIdListStr.split(",");
+			List<String> imgNameList = Arrays.asList(imgIdArr);
+			receive.setImg_name_list(imgNameList);
+			String appName = (String) map.get("app_name");
+			receive.setApp_name(appName);
+			String searchKey = (String) map.get("search_key");
+			receive.setSearch_key(searchKey);
+			String commentKey = (String) map.get("comment_key");
+			receive.setComment_key(commentKey);
+			Timestamp utime = (Timestamp) map.get("utime");
+			String utimeStr = sim.format(utime);
+			receive.setUtime(utimeStr);
+			receiveList.add(receive);
+		}
+		resMap.put("receivelist", receiveList);
+		String res = this.reorganizeRes(resMap, responseStatus.succuess);
+		writer.write(res);
 		writer.flush();
 		writer.close();
 	}
-
+	
+	@RequestMapping(value="receiveimg", method=RequestMethod.GET)
+	public void showImg (@RequestParam("imgname") String imgName, @RequestParam("taskinfo") String taskInfo, HttpServletResponse response) {
+        response.setContentType("image/jpeg");
+        ServletOutputStream out = null;
+        try {
+			out = response.getOutputStream();
+			int taskid = Base64Util.decode(taskInfo);
+			if (taskid == 0) {
+				FileInputStream is = new FileInputStream(loadFialImgFile);
+				byte[] buffer = new byte[1024];
+				int len = 0;
+				while ((len = is.read(buffer)) != -1) {
+					out.write(buffer, 0, len);
+				}
+				is.close();
+				out.flush();
+				return;
+				}
+				String thisImgPath = imgPath + "task_" +  taskid + "/" + imgName;
+				File imgFile = new File(thisImgPath);
+				FileInputStream is = new FileInputStream(imgFile);
+				byte[] buffer = new byte[1024];
+		        int len = 0;
+		        while ((len = is.read(buffer)) != -1) {
+		            out.write(buffer, 0, len);
+		        }
+		        is.close();
+		        out.flush();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		} finally {
+			if (out != null) {
+				try {
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	
+	
 }
 
 

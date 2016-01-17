@@ -42,15 +42,22 @@
 	 		}
 	 	}
 		var userinfo = $.ajax({url : "action/user/simpleinfo?uinfo=" + uinfo,	async : false});
-		var userInfoJson = eval("(" + userinfo.responseText + ")");
+		var responseJson = eval("(" + userinfo.responseText + ")");
+		var status = responseJson.status;
+		var msg = responseJson.msg;
+		if (status != 0) {
+ 			location.href = "./index.jsp?msg=" + msg;
+		}
+		var userInfoJson = responseJson.result;
 		headimgUrl = userInfoJson.headimgurl;
-		nickName = userInfoJson.nickName;
+		nickName = userInfoJson.nickname;
 		score = userInfoJson.score;
 		$.cookie("uinfo", uinfo, { expires: 60 });
 		$("img#headimg").attr("src", headimgUrl);
 		$("b#nickname").text(nickName);
 		$("b#score").text(score);
 	 	$("a#score").attr("href","scorehis.jsp?uinfo=" + uinfo);
+		$("a#mytask").attr("href","mytask.jsp?uinfo=" + uinfo);
 	});
 	
 	var needScore = "0";
@@ -63,7 +70,13 @@
 			return;
 		}
 		var needScoreRes = $.ajax({url : "action/task/needScore?uinfo=" + uinfo +"&taskcount=" + taskCount,	async : false});
-		var needScoreJson = eval("(" + needScoreRes.responseText + ")");
+		var responseJson = eval("(" + needScoreRes.responseText + ")");
+		var status = responseJson.status;
+		var msg = responseJson.msg;
+		if (status != 0) {
+ 			location.href = "./index.jsp?msg=" + msg;
+		}
+		var needScoreJson = responseJson.result;
 		needScore = needScoreJson.need_score;
 		$("input#needScore").val(needScore);
 	}
@@ -108,13 +121,12 @@
 				location.reload();
 			},
 			success : function(res) {
-				var status = res.res_status;
-				if (status == 1) {
-					alert("分数不足，未能提交任务");
-				} else if (status == 2) {
-					alert("系统错误");
-				} else if (status == 3) {
-					alert("系统错误");
+				var status = res.status;
+				var msg = res.msg;
+				if (status != 0) {
+					alert(msg);
+				} else if (status == 1) {
+		 			location.href = "./index.jsp?msg=" + msg;
 				} else {
 					alert("任务提交成功");
 					location.href = "./userinit.jsp";
@@ -138,8 +150,8 @@
 	<div class="menu">
 		<ul>
 			<li><span><img id="headimg" src="img/head.jpg" /></span></li>
-			<li><span><a href=""><b id="nickname"></b><br />用户昵称</a></span></li>
-			<li style="width: 34%"><span><a id="score" href=""><b id="score">0</b><br />当前积分</a></span></li>
+			<li><span><a id="mytask">用户昵称<br/><b id="nickname"></b><br /><b>我的任务</b></a></span></li>
+			<li style="width: 34%"><span><a id="score" href="">当前积分<br/><b id="score">0</b><br /><b>积分历史</b></a></span></li>
 		</ul>
 	</div>
 	<br />

@@ -16,64 +16,80 @@
 	#headimg{width:60px; height:60px} 
 	.taskform{MARGIN-RIGHT: auto;MARGIN-LEFT: auto;vertical-align:middle;}
 	.tasktable{width:100%; height:100%; border-collapse:collapse;border:1px solid #F00; border-spacing:5px;}
+	.min{width:230px;height:auto;}
 	</style>
 	<title>love_to_task</title>
-	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+  	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="js/zepto_min.js"></script>
 	<script type="text/javascript" src="js/touchslider.js"></script>
 	<script type="text/javascript" src="js/cookie_tools.js"></script>
+	
+	<script type="text/javascript" src="js/jquery.mousewheel-3.0.2.pack.js"></script>
+	<script type="text/javascript" src="js/jquery.fancybox-1.3.1.js"></script>
+	<script type="text/javascript" src="js/pngobject.js"></script>
+ 	<link rel="stylesheet" href="css/style.css" type="text/css" />
+	<link rel="stylesheet" href="css/jquery.fancybox-1.3.1.css" type="text/css" />
+	
+	
 	<script type="text/javascript">
  	
  	var pagenum = 1;
-	function getTaskList() {
-		var taskListRes = $.ajax({url : "action/task/taskList?page=" + pagenum,	async : false});
-		var responseJson = eval("(" + taskListRes.responseText + ")");
-		var taskListJson = responseJson.result;
-		var taskList = taskListJson.tasklist;
-		for (var index=0; index<taskList.length; index++) {
-			var task = taskList[index];
-			var eachUinfo = task.uinfo;
-			var eachTaskinfo = task.task_info;
-			var uName = task.user_name;
-			var app_name = task.app_name;
-			var search_key = task.search_key;
-			var rank = task.rank;
-			var comment_key = task.comment_key;
-			var task_count = task.task_count;
-			var receive_count = task.receive_count;
-			var complate_count = task.complate_count;
-			var ctime = task.ctime;
+	var uinfo = "";
+	function getReceiveList() {
+		var receiveListRes = $.ajax({url : "action/task/receiveList?page=" + pagenum + "&uinfo=" + uinfo,	async : false});
+		var responseJson = eval("(" + receiveListRes.responseText + ")");
+		var receiveListJson = responseJson.result;
+		var receiveList = receiveListJson.receivelist;
+		for (var index=0; index < receiveList.length; index++) {
+			var receive = receiveList[index];
+			var taskInfo = receive.task_info;
+			var eachUinfo = receive.receive_uinfo;
+			var receiveUname = receive.receive_uname;
+			var eachReceiveInfo = receive.receive_info;
+			var imgNameList = receive.img_name_list;
+			var app_name = receive.app_name;
+			var search_key = receive.search_key;
+			var comment_key = receive.comment_key;
+			var utime = receive.utime;
+			var imgtdStr = "";
+			for (var imgIndex = 0; imgIndex < imgNameList.length; imgIndex++) {
+				var eachImgName = imgNameList[imgIndex];
+				var eachImgTdStr = "<tr><td>图片" + (imgIndex + 1) + "</td><td><a id=\"receiveimg\" href=\"action/task/receiveimg?imgname=" + eachImgName + "&taskinfo=" + taskInfo + "\"><img class=\"min\" src=\"action/task/receiveimg?imgname=" + eachImgName + "&taskinfo=" + taskInfo + "\"/></a></td></tr>";		
+				imgtdStr += eachImgTdStr;
+			}
 			var innerTableStr = "<div id=\"" + index + "\"  style=\"display:none\" class=\"newbox\"><table class=\"tasktable\" border=\"1\" bordercolor=\"red\" ><tbody>" +
-													"<tr style=\"display:none\"><td>" + eachUinfo + "</td><td>" + eachTaskinfo + "</td></tr>" +
-													"<tr><td>发起人</td><td>" + uName + "</td></tr>" +
+													"<tr style=\"display:none\" id=\"" + taskInfo + "\"><td>" + eachUinfo + "</td><td>" + eachReceiveInfo + "</td></tr>" +
+													"<tr><td>执行人</td><td>" + receiveUname + "</td></tr>" +
+													"<tr><td>提交时间</td><td>" + utime + "</td></tr>" +
 													"<tr><td>应用名称</td><td>" + app_name + "</td></tr>" +												
 													"<tr><td>搜索关键词</td><td>" + search_key + "</td></tr>" +			
-													"<tr><td>当前排名</td><td>" + rank + "</td></tr>" +		
-													"<tr><td>评论关键词</td><td>" + comment_key + "</td></tr>" +		
-													"<tr><td>发布任务数</td><td>" + task_count + "</td></tr>" +		
-													"<tr><td>已领取数量</td><td>" + receive_count + "</td></tr>" +		
-													"<tr><td>已完成数量</td><td>" + complate_count + "</td></tr>" +		
-													"<tr><td>发布日期</td><td>" + ctime + "</td></tr>" +	
-													"<tr><td><input type=\"button\" value=\"领取任务\" onclick=\"receiveTask(" + index + ")\"/></td><td><input type=\"button\" value=\"关闭\" onclick=\"shutDownTaskDetail()\"/></td></tr>" +	
+													"<tr><td>评论关键词</td><td>" + comment_key + "</td></tr>" +	
+													imgtdStr +		
+													"<tr><td><input type=\"button\" value=\"审核通过\" onclick=\"receiveQualified(" + index + ")\"/></td><td><input type=\"button\" value=\"审核不通过\" onclick=\"receiveUnqualified(" + index + ")\"/></td></tr>" +	
 													"</tbody></table></div>";
-			var outTaskStr = "<tr><td>" + uName + "</td><td>" + app_name + "</td><td>" + search_key + "</td><td>" + task_count + "</td><td>" + receive_count + "</td><td><input type=\"button\" value=\"查看\" onclick=\"showTaskDetail('" + index + "')\"/></td></tr>";
+			var outTaskStr = "<tr><td>" + app_name + "</td><td>" + search_key + "</td><td>" + comment_key + "</td><td>" + receiveUname + "</td><td><input type=\"button\" value=\"查看\" onclick=\"showReceiveDetail('" + index + "')\"/></td></tr>";
 			$('tbody#tasklist').append(outTaskStr);
 			$('div#eachTaskShow').append(innerTableStr);
 		}
 		pagenum++;
 	}
 	
-	function showTaskDetail (index) {
+	function showReceiveDetail (index) {
 		$('div#eachTaskShow>div').attr("style","display:none");
 		$('div#eachTaskShow>div#' + index).attr("style","display:block");
+		$("a#receiveimg").fancybox({
+			'showCloseButton':true,
+			'hideOnOverlayClick':true,
+			'overlayShow':true
+		});
 		$('body,html').animate({scrollTop:0},500); 
 	}
 	
-	function shutDownTaskDetail () {
+	function receiveUnqualified (index) {
 		$('div#eachTaskShow>div').attr("style","display:none");
 	}
 	
-	function receiveTask (index){
+	function receiveQualified (index){
 		var taskUinfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0)>td:eq(0)').text();
 		if (taskUinfo == uinfo) {
 			alert("不能领取自己提交的任务");
@@ -109,7 +125,6 @@
 	}
 	
 	var idRe = new RegExp("\\d+"); 
-	var uinfo = "";
 	$(document).ready(function(){
 		var url = location.search;
 	 	if (url.indexOf("uinfo") != 0 && url != "") {
@@ -140,7 +155,10 @@
 		$("b#score").text(score);
 	 	$("a#score").attr("href","scorehis.jsp?uinfo=" + uinfo);
 		$("a#mytask").attr("href","mytask.jsp?uinfo=" + uinfo);
-		getTaskList();
+		getReceiveList();
+		$("a#receiveimg").fancybox({
+			'showCloseButton':true
+		});
 	});
 
 </script>
@@ -162,7 +180,7 @@
 	<br />
 	<br />
 	<div class="newbox" id="slider4">
-		<p>赚积分</p>
+		<p>审核</p>
 	</div>
 	<div id="eachTaskShow" class="newrow" >
     </div>
@@ -173,12 +191,12 @@
   	  <br/>
                	<table class="tasktable" border="1" bordercolor="red" >
                	<tbody id="tasklist">
-               		<tr><td><p>用户昵称</p></td><td><p>app</p></td><td><p>搜索关键词</p></td><td><p>任务数量</p></td><td><p>已领取数量</p></td><td><p>查看详情</p></td></tr>
+               		<tr><td><p>app</p></td><td><p>搜索关键词</p></td><td><p>评论关键词</p></td><td><p>领取用户</p></td><td><p>提交详情</p></td></tr>
                	</tbody>
                	</table>
     </div>
     <div class="newbox">
-		<a onclick="getTaskList()"><b>查看更多</b></a>
+		<a onclick="getReceiveList()"><b>查看更多</b></a>
 	</div>
     </div>
 
