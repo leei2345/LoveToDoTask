@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.alibaba.fastjson.JSONObject;
 import com.aosbank.lovetodotask.http.HttpHandle;
+import com.aosbank.lovetodotask.pojo.BaseType;
 import com.aosbank.lovetodotask.pojo.User;
 import com.aosbank.lovetodotask.utils.Base64Util;
 import com.aosbank.lovetodotask.utils.ConfigUtils;
@@ -129,7 +130,7 @@ public class WeiXinOauth2Controller extends BaseController {
 			}
 			return;
 		}
-		String encodeUserId = Base64Util.encode(userId);
+		String encodeUserId = Base64Util.encode(userId, BaseType.mcl13);
 		String path = "userinit.jsp?data=" + encodeUserId;
 		try {
 			response.sendRedirect(path);

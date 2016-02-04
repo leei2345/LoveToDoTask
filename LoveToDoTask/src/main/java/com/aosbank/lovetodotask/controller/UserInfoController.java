@@ -45,7 +45,7 @@ public class UserInfoController extends BaseController {
 			return;
 		}
 		Map<String, String> userInfo = this.checkLoginStatus(useridEncode);
-		if (userInfo == null) {
+		if (userInfo == null || userInfo.size() == 0) {
 			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
 			writer.write(res);
 			writer.flush();

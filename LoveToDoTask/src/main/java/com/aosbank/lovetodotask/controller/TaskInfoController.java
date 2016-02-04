@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.aosbank.lovetodotask.pojo.BaseType;
 import com.aosbank.lovetodotask.pojo.Receive;
 import com.aosbank.lovetodotask.pojo.Task;
 import com.aosbank.lovetodotask.utils.Base64Util;
@@ -44,6 +45,10 @@ public class TaskInfoController extends BaseController {
 	
 	static {
 		imgPath = ConfigUtils.getValue("img.path");
+		File dir = new File(imgPath);
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
 		String path = TaskInfoController.class.getResource("").getPath() + "tempimg/localfail.jpg";
 		loadFialImgFile = new File(path);
 	}
@@ -116,7 +121,7 @@ public class TaskInfoController extends BaseController {
 			}
 		}
 		String uinfo = reqMap.get("uinfo");
-		int userid = Base64Util.decode(uinfo);
+		int userid = Base64Util.decode(uinfo, BaseType.mcl13);
 		if (userid == 0) {
 			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
 			writer.write(res);
@@ -196,10 +201,10 @@ public class TaskInfoController extends BaseController {
 		for (Map<String, Object> map : selectRes) {
 			Task task = new Task();
 			int userid = (Integer) map.get("userid");
-			String eachUinfo = Base64Util.encode(userid);
+			String eachUinfo = Base64Util.encode(userid, BaseType.mcl13);
 			task.setUinfo(eachUinfo);
 			int taskid = (Integer) map.get("taskid");
-			String eachTaskinfo = Base64Util.encode(taskid);
+			String eachTaskinfo = Base64Util.encode(taskid, BaseType.mcl13);
 			task.setTask_info(eachTaskinfo);
 			String uName = (String) map.get("nickname");
 			if (StringUtils.isBlank(uName)) {
@@ -258,7 +263,7 @@ public class TaskInfoController extends BaseController {
 			}
 		}
 		String uinfo = reqMap.get("uinfo");
-		int userid = Base64Util.decode(uinfo);
+		int userid = Base64Util.decode(uinfo, BaseType.mcl13);
 		if (userid == 0) {
 			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
 			writer.write(res);
@@ -267,7 +272,7 @@ public class TaskInfoController extends BaseController {
 			return;
 		}
 		String taskInfo = reqMap.get("taskinfo");
-		int taskId = Base64Util.decode(taskInfo);
+		int taskId = Base64Util.decode(taskInfo, BaseType.mcl13);
 		if (taskId == 0) {
 			status = responseStatus.task_not_exist;
 		} else {
@@ -310,7 +315,7 @@ public class TaskInfoController extends BaseController {
 			e.printStackTrace();
 		}
 		Map<String, Object> resMap = new HashMap<String, Object>();
-		int userid = Base64Util.decode(uInfo);
+		int userid = Base64Util.decode(uInfo, BaseType.mcl13);
 		if (userid == 0) {
 			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
 			writer.write(res);
@@ -325,25 +330,29 @@ public class TaskInfoController extends BaseController {
 		} catch (Exception e) {
 		}
 		int start = (page -1)*EACHPAGECOUNT;
-		String selectSql = "select a.id,a.task_id,a.receive_uid,a.img_id_list,a.utime,b.app_name,b.search_key,b.comment_key from tb_receive a left join tb_task b on a.task_id=b.id and b.user_id=" + userid + " and a.img_id_list is not null and a.audit_result=1 order by a.ctime limit " + start + "," + EACHPAGECOUNT;
+		String selectSql = "select a.id,a.task_id,a.receive_uid,a.img_id_list,a.utime,b.app_name,b.search_key,b.comment_key from tb_receive a left join tb_task b on a.task_id=b.id and b.user_id=" + userid + " and a.img_id_list!=''  and a.audit_result='0' order by a.ctime limit " + start + "," + EACHPAGECOUNT;
 		List<Map<String, Object>> selectRes = dao.select(selectSql);
 		for (Map<String, Object> map : selectRes) {
 			Receive receive = new Receive();
 			int taskid = (Integer) map.get("task_id");
-			String taskInfo = Base64Util.encode(taskid);
+			String taskInfo = Base64Util.encode(taskid, BaseType.mcl13);
 			receive.setTask_info(taskInfo);
 			int receiveid = (Integer) map.get("id");
-			String eachReceiveInfo = Base64Util.encode(receiveid);
+			String eachReceiveInfo = Base64Util.encode(receiveid, BaseType.mcl15);
 			receive.setReceive_info(eachReceiveInfo);
 			int receiveuid = (Integer) map.get("receive_uid");
-			String receiveUinfo = Base64Util.encode(receiveuid);
+			String receiveUinfo = Base64Util.encode(receiveuid, BaseType.mcl15);
 			receive.setReceive_uinfo(receiveUinfo);
 			String receiveUname = redis.getUserName(receiveuid);
 			if (StringUtils.isBlank(receiveUname)) {
-				continue;
+				redis.insertUserInfo(receiveuid, null);
+				receiveUname = redis.getUserName(receiveuid);
 			}
 			receive.setReceive_uname(receiveUname);
 			String imgIdListStr = (String) map.get("img_id_list");
+			if (StringUtils.isBlank(imgIdListStr)) {
+				continue;
+			}
 			String[] imgIdArr = imgIdListStr.split(",");
 			List<String> imgNameList = Arrays.asList(imgIdArr);
 			receive.setImg_name_list(imgNameList);
@@ -365,13 +374,69 @@ public class TaskInfoController extends BaseController {
 		writer.close();
 	}
 	
+	@RequestMapping(value="receivequalified", method=RequestMethod.GET)
+	public void getReceiveQualified (@RequestParam("taskinfo") String taskinfo, @RequestParam("uinfo") String uInfo, @RequestParam("type") String type,@RequestParam("receiveinfo") String receiveinfo,@RequestParam("receiveuinfo") String receiveuinfo,HttpServletResponse response) {
+		response.setHeader("Content-type", "application/json;charset=UTF-8");
+		PrintWriter writer = null;
+		try {
+			writer = response.getWriter();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<String, Object> resMap = new HashMap<String, Object>();
+		int userid = Base64Util.decode(uInfo, BaseType.mcl13);
+		if (userid == 0) {
+			String res = this.reorganizeRes(resMap, responseStatus.need_relogin);
+			writer.write(res);
+			writer.flush();
+			writer.close();
+			return;
+		}
+		String text = "";
+		if (StringUtils.equals("qualified", type)) {
+			int receiveid = Base64Util.decode(receiveinfo, BaseType.mcl15);
+			int receiveuid = Base64Util.decode(receiveuinfo, BaseType.mcl15);
+			int taskid = Base64Util.decode(taskinfo, BaseType.mcl13);
+			String sql = "select id from tb_receive where receive_uid=" + receiveuid + " and task_id=" + taskid;
+			List<Map<String, Object>> selectRes = dao.select(sql);
+			if (selectRes.size() < 1) {
+				text = "没有这个任务";
+			} else {
+				int id = (Integer) selectRes.get(0).get("id");
+				sql = "select user_id from tb_task where id=" + taskid;
+				List<Map<String, Object>> selectTaskRes = dao.select(sql);
+				int checkuid = 0;
+				if (selectTaskRes.size() > 0) {
+					int user_id =  (Integer) selectTaskRes.get(0).get("selectTaskRes");
+				}
+				if (id != receiveid || checkuid != userid) {
+					text = "没有这个任务";
+				} else {
+					TransactionStatus status = dao.setTransactionStart();
+					sql = "update audit_result ";
+					
+				}
+			}
+		} else if (StringUtils.equals("unqualified", type)) {
+			
+		} else {
+			text = "参数写错了，亲，别再做抓取了，没什么前途的，多研究研究大数据吧";
+		}
+		
+		resMap.put("receivelist", receiveList);
+		String res = this.reorganizeRes(resMap, responseStatus.succuess);
+		writer.write(res);
+		writer.flush();
+		writer.close();
+	}
+	
 	@RequestMapping(value="receiveimg", method=RequestMethod.GET)
 	public void showImg (@RequestParam("imgname") String imgName, @RequestParam("taskinfo") String taskInfo, HttpServletResponse response) {
         response.setContentType("image/jpeg");
         ServletOutputStream out = null;
         try {
 			out = response.getOutputStream();
-			int taskid = Base64Util.decode(taskInfo);
+			int taskid = Base64Util.decode(taskInfo, BaseType.mcl13);
 			if (taskid == 0) {
 				FileInputStream is = new FileInputStream(loadFialImgFile);
 				byte[] buffer = new byte[1024];

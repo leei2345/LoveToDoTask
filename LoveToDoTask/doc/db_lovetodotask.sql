@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50546
 File Encoding         : 65001
 
-Date: 2016-01-15 19:02:50
+Date: 2016-02-04 13:31:03
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -44,11 +44,13 @@ CREATE TABLE `tb_receive` (
   `ctime` datetime NOT NULL,
   `utime` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- ----------------------------
 -- Records of tb_receive
 -- ----------------------------
+INSERT INTO `tb_receive` VALUES ('1', '8', '1', '1.jpg,2.jpg', '0', '2016-01-18 10:17:11', '2016-02-03 14:30:17');
+INSERT INTO `tb_receive` VALUES ('2', '1', '2', null, '0', '2016-02-03 14:53:30', null);
 
 -- ----------------------------
 -- Table structure for `tb_task`
@@ -74,7 +76,7 @@ CREATE TABLE `tb_task` (
 -- Records of tb_task
 -- ----------------------------
 INSERT INTO `tb_task` VALUES ('7', '1', '公牛炒股', '股票', '16', '好用的股票软件', '50', '10', '0', '0', '2016-01-14 16:32:12', null);
-INSERT INTO `tb_task` VALUES ('8', '1', 'test1', '管它呢', '1', '好用个屎', '50', '10', '0', '0', '2016-01-15 14:02:11', null);
+INSERT INTO `tb_task` VALUES ('8', '2', 'test1', '管它呢', '1', '好用个屎', '50', '10', '1', '0', '2016-01-15 14:02:11', null);
 INSERT INTO `tb_task` VALUES ('9', '1', 'test2', '哒哒哒', '2', '大大大叔', '50', '10', '0', '0', '2016-01-15 14:03:02', null);
 
 -- ----------------------------
@@ -96,9 +98,10 @@ CREATE TABLE `tb_user` (
   `utime` datetime NOT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `openid` (`openid`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- ----------------------------
 -- Records of tb_user
 -- ----------------------------
 INSERT INTO `tb_user` VALUES ('1', 'asdasd', '950', 'leei', '1', '河北', '承德', '中国', 'http://www.divcss5.com/uploads/allimg/1310/1_131023133621_1.png', 'sdsd', '2016-01-13 19:09:30', '2016-01-13 19:09:32');
+INSERT INTO `tb_user` VALUES ('2', 'sadasd', '1000', '三点电脑卡', '1', '北京', '北京', '中国', 'http://www.dpfile.com/gp/cms/1452490575136.jpg', 'sadasd', '2016-01-18 10:08:12', '2016-01-18 10:08:15');

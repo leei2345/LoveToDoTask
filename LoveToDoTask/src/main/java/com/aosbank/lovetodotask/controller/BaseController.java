@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSON;
 import com.aosbank.lovetodotask.dao.MysqlDao;
 import com.aosbank.lovetodotask.dao.RedisDao;
+import com.aosbank.lovetodotask.pojo.BaseType;
 import com.aosbank.lovetodotask.utils.Base64Util;
 
 /**
@@ -67,7 +68,7 @@ public class BaseController {
 		int userId = 0;
 		Map<String, String> userInfoMap = null;
 		try {
-			userId = Base64Util.decode(useridEncode);
+			userId = Base64Util.decode(useridEncode, BaseType.mcl13);
 			userInfoMap = redis.getUserInfo(userId);
 		} catch (Exception e) {
 			return userInfoMap;

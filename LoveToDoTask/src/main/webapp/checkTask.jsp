@@ -16,7 +16,7 @@
 	#headimg{width:60px; height:60px} 
 	.taskform{MARGIN-RIGHT: auto;MARGIN-LEFT: auto;vertical-align:middle;}
 	.tasktable{width:100%; height:100%; border-collapse:collapse;border:1px solid #F00; border-spacing:5px;}
-	.min{width:230px;height:auto;}
+	.min{width:320px;height:auto;}
 	</style>
 	<title>love_to_task</title>
   	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
@@ -90,38 +90,33 @@
 	}
 	
 	function receiveQualified (index){
-		var taskUinfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0)>td:eq(0)').text();
-		if (taskUinfo == uinfo) {
-			alert("不能领取自己提交的任务");
-			return;
-		}
-		var taskInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0)>td:eq(1)').text();
-		var push_data = "uinfo=" + uinfo +"&taskinfo=" + taskInfo;
-		$.ajax({
-			cache : true,
-			type : "POST",
-			url : "action/task/receiveTask",
-			data : push_data,
-			async : false,
-			error : function(request) {
-				alert("Connection error");
-				location.reload();
-			},
-			success : function(res) {
-				var status = res.status;
-				var msg = res.msg;
-				if (status == 1) {
-					location.href = "./index.jsp?msg=" + msg;
-				} else if (status != 0) {
-					alert(msg);
-				} else {
-					alert("任务领取成功");
-					location.href = "./userinit.jsp";
-					
+		var taskInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0)').attr("id");
+		var receiceUInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0) > td:eq(0)').text();
+		var receiveInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0) > td:(1)').text();
+		var trueOrFalse = window.confirm("单击“确定”继续。单击“取消”停止。"); 
+		if (trueOrFalse == true) {
+			$.ajax({
+				cache : true,
+				type : "GET",
+				url : "action/task/receivequalified?receiveinfo=" + receiveInfo + "&type=qualified&uinfo=" + uinfo + "&receiveuinfo=" +receiceUInfo + "&taskinfo=" + taskInfo,
+				async : false,
+				error : function(request) {
+					alert("Connection error");
+					location.reload();
+				},
+				success : function(res) {
+					var resData = res.data;
+					if (resData != "") {
+						alert(resData);
+					} else {
+						alert("系统错误");
+					}
+					location.reload();
 				}
-			}
-		});
-		
+			});
+		}
+		pagenum=1;
+		location.reload();
 	}
 	
 	var idRe = new RegExp("\\d+"); 
@@ -153,8 +148,8 @@
 		$("img#headimg").attr("src", headimgUrl);
 		$("b#nickname").text(nickName);
 		$("b#score").text(score);
-	 	$("a#score").attr("href","scorehis.jsp?uinfo=" + uinfo);
-		$("a#mytask").attr("href","mytask.jsp?uinfo=" + uinfo);
+	 	$("a#score").attr("href","scorehis.jsp");
+		$("a#mytask").attr("href","mytask.jsp");
 		getReceiveList();
 		$("a#receiveimg").fancybox({
 			'showCloseButton':true

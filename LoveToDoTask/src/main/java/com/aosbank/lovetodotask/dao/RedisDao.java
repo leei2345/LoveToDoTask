@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 
 import redis.clients.jedis.ShardedJedis;
@@ -41,7 +42,7 @@ public class RedisDao {
 			userInfoMap = userInfoList.get(0);
 		}
 		jedis.hmset(USERINFOKEY + userId, userInfoMap);
-		jedis.expire(USERINFOKEY + userId, 3600);
+		jedis.expire(USERINFOKEY + userId, 36000);
 		shardedJedisPool.returnResource(jedis);
 	}
 	
@@ -58,5 +59,16 @@ public class RedisDao {
 		shardedJedisPool.returnResource(jedis);
 		return uName;
 	}
+	
+	public static void main(String[] args) {
+
+		@SuppressWarnings("resource")
+		ClassPathXmlApplicationContext application = new ClassPathXmlApplicationContext(new String[]{"database.xml"});
+		application.start();
+		RedisDao redis = (RedisDao) application.getBean("redisDao");
+		redis.insertUserInfo(2, null);
+	
+	}
+	
 	
 }

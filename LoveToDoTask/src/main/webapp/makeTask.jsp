@@ -56,8 +56,8 @@
 		$("img#headimg").attr("src", headimgUrl);
 		$("b#nickname").text(nickName);
 		$("b#score").text(score);
-	 	$("a#score").attr("href","scorehis.jsp?uinfo=" + uinfo);
-		$("a#mytask").attr("href","mytask.jsp?uinfo=" + uinfo);
+	 	$("a#score").attr("href","scorehis.jsp");
+		$("a#mytask").attr("href","mytask.jsp");
 	});
 	
 	var needScore = "0";
