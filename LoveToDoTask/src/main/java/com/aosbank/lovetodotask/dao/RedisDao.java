@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 
+import com.aosbank.lovetodotask.pojo.BaseType;
+import com.aosbank.lovetodotask.utils.Base64Util;
+
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
@@ -67,7 +70,7 @@ public class RedisDao {
 		application.start();
 		RedisDao redis = (RedisDao) application.getBean("redisDao");
 		redis.insertUserInfo(2, null);
-	
+		System.out.println(Base64Util.encode(2, BaseType.mcl13));
 	}
 	
 	

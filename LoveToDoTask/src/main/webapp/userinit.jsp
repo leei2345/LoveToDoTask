@@ -27,7 +27,7 @@
 		var uinfo = "";
 	 	if (url.indexOf("data") != 0 && url != "") {
 	 		var str = url.substr(1);
-	 		uinfo = str.substr(5);
+	 		uinfo = str.substr(6);
 	 	}
 	 	var headimgUrl = "";
 	 	var nickName = "";

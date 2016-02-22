@@ -334,6 +334,11 @@ public class TaskInfoController extends BaseController {
 		List<Map<String, Object>> selectRes = dao.select(selectSql);
 		for (Map<String, Object> map : selectRes) {
 			Receive receive = new Receive();
+			String appName = (String) map.get("app_name");
+			if (StringUtils.isBlank(appName)) {
+				continue;
+			}
+			receive.setApp_name(appName);
 			int taskid = (Integer) map.get("task_id");
 			String taskInfo = Base64Util.encode(taskid, BaseType.mcl13);
 			receive.setTask_info(taskInfo);
@@ -356,8 +361,6 @@ public class TaskInfoController extends BaseController {
 			String[] imgIdArr = imgIdListStr.split(",");
 			List<String> imgNameList = Arrays.asList(imgIdArr);
 			receive.setImg_name_list(imgNameList);
-			String appName = (String) map.get("app_name");
-			receive.setApp_name(appName);
 			String searchKey = (String) map.get("search_key");
 			receive.setSearch_key(searchKey);
 			String commentKey = (String) map.get("comment_key");
@@ -392,7 +395,7 @@ public class TaskInfoController extends BaseController {
 			writer.close();
 			return;
 		}
-		String text = "";
+		String text = "succ";
 		if (StringUtils.equals("qualified", type)) {
 			int receiveid = Base64Util.decode(receiveinfo, BaseType.mcl15);
 			int receiveuid = Base64Util.decode(receiveuinfo, BaseType.mcl15);
@@ -407,14 +410,22 @@ public class TaskInfoController extends BaseController {
 				List<Map<String, Object>> selectTaskRes = dao.select(sql);
 				int checkuid = 0;
 				if (selectTaskRes.size() > 0) {
-					int user_id =  (Integer) selectTaskRes.get(0).get("selectTaskRes");
+					checkuid =  (Integer) selectTaskRes.get(0).get("user_id");
 				}
 				if (id != receiveid || checkuid != userid) {
 					text = "没有这个任务";
 				} else {
 					TransactionStatus status = dao.setTransactionStart();
-					sql = "update audit_result ";
-					
+					sql = "update tb_receive set audit_result=1,utime=now() where id=" + receiveid + " and task_id=" + taskid;
+					dao.ExecuteSql(sql);
+					//修改完成数量
+					sql = "update tb_task set complate_count=(complate_count+1) where id=" + taskid;
+					dao.ExecuteSql(sql);
+					//加积分
+					String needScore = confMap.get(NEEDSCOREKEY);
+					sql = "update tb_user set score=(score+" + needScore + ") where id=" + receiveuid;
+					dao.ExecuteSql(sql);
+					dao.transCommit(status);					
 				}
 			}
 		} else if (StringUtils.equals("unqualified", type)) {
@@ -422,8 +433,7 @@ public class TaskInfoController extends BaseController {
 		} else {
 			text = "参数写错了，亲，别再做抓取了，没什么前途的，多研究研究大数据吧";
 		}
-		
-		resMap.put("receivelist", receiveList);
+		resMap.put("text", text);
 		String res = this.reorganizeRes(resMap, responseStatus.succuess);
 		writer.write(res);
 		writer.flush();

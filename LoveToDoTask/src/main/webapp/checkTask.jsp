@@ -92,7 +92,7 @@
 	function receiveQualified (index){
 		var taskInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0)').attr("id");
 		var receiceUInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0) > td:eq(0)').text();
-		var receiveInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0) > td:(1)').text();
+		var receiveInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0) > td:eq(1)').text();
 		var trueOrFalse = window.confirm("单击“确定”继续。单击“取消”停止。"); 
 		if (trueOrFalse == true) {
 			$.ajax({
@@ -105,8 +105,9 @@
 					location.reload();
 				},
 				success : function(res) {
-					var resData = res.data;
-					if (resData != "") {
+					var resData = res.result;
+					var msg = resData.text;
+					if (msg != "succ") {
 						alert(resData);
 					} else {
 						alert("系统错误");
