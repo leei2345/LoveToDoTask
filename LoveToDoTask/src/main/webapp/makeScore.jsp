@@ -12,6 +12,7 @@
 	<meta content="black" name="apple-mobile-web-app-status-bar-style" />
 	<meta content="telephone=no" name="format-detection" />
 	<link rel="stylesheet" type="text/css" href="css/touch.css" />
+	<link rel="stylesheet" type="text/css" href="css/weui.css" />
  	<style> 
 	#headimg{width:60px; height:60px} 
 	.taskform{MARGIN-RIGHT: auto;MARGIN-LEFT: auto;vertical-align:middle;}
@@ -178,7 +179,7 @@
                	</table>
     </div>
     <div class="newbox">
-		<a onclick="getTaskList()"><b>查看更多</b></a>
+		 <a onclick="getTaskList()" class="weui_btn weui_btn_warn">查看更多</a>
 	</div>
     </div>
 

@@ -416,7 +416,7 @@ public class TaskInfoController extends BaseController {
 					text = "没有这个任务";
 				} else {
 					TransactionStatus status = dao.setTransactionStart();
-					sql = "update tb_receive set audit_result=1,utime=now() where id=" + receiveid + " and task_id=" + taskid;
+					sql = "update tb_receive set audit_result='1',utime=now() where id=" + receiveid + " and task_id=" + taskid;
 					dao.ExecuteSql(sql);
 					//修改完成数量
 					sql = "update tb_task set complate_count=(complate_count+1) where id=" + taskid;
@@ -429,7 +429,28 @@ public class TaskInfoController extends BaseController {
 				}
 			}
 		} else if (StringUtils.equals("unqualified", type)) {
-			
+			int receiveid = Base64Util.decode(receiveinfo, BaseType.mcl15);
+			int receiveuid = Base64Util.decode(receiveuinfo, BaseType.mcl15);
+			int taskid = Base64Util.decode(taskinfo, BaseType.mcl13);
+			String sql = "select id from tb_receive where receive_uid=" + receiveuid + " and task_id=" + taskid;
+			List<Map<String, Object>> selectRes = dao.select(sql);
+			if (selectRes.size() < 1) {
+				text = "没有这个任务";
+			} else {
+				int id = (Integer) selectRes.get(0).get("id");
+				sql = "select user_id from tb_task where id=" + taskid;
+				List<Map<String, Object>> selectTaskRes = dao.select(sql);
+				int checkuid = 0;
+				if (selectTaskRes.size() > 0) {
+					checkuid =  (Integer) selectTaskRes.get(0).get("user_id");
+				}
+				if (id != receiveid || checkuid != userid) {
+					text = "没有这个任务";
+				} else {
+					sql = "update tb_receive set audit_result='-1',utime=now() where id=" + receiveid + " and task_id=" + taskid;
+					dao.ExecuteSql(sql);
+				}
+			}
 		} else {
 			text = "参数写错了，亲，别再做抓取了，没什么前途的，多研究研究大数据吧";
 		}

@@ -86,7 +86,34 @@
 	}
 	
 	function receiveUnqualified (index) {
-		$('div#eachTaskShow>div').attr("style","display:none");
+		var taskInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0)').attr("id");
+		var receiceUInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0) > td:eq(0)').text();
+		var receiveInfo = $('div#eachTaskShow>div#' + index + '>table>tbody>tr:eq(0) > td:eq(1)').text();
+		var trueOrFalse = window.confirm("单击“确定”继续。单击“取消”停止。"); 
+		if (trueOrFalse == true) {
+			$.ajax({
+				cache : true,
+				type : "GET",
+				url : "action/task/receivequalified?receiveinfo=" + receiveInfo + "&type=unqualified&uinfo=" + uinfo + "&receiveuinfo=" +receiceUInfo + "&taskinfo=" + taskInfo,
+				async : false,
+				error : function(request) {
+					alert("Connection error");
+					location.reload();
+				},
+				success : function(res) {
+					var resData = res.result;
+					var msg = resData.text;
+					if (msg != "succ") {
+						alert(resData);
+					} else {
+						alert("提交成功");
+					}
+					location.reload();
+				}
+			});
+		}
+		pagenum=1;
+		location.reload();
 	}
 	
 	function receiveQualified (index){
@@ -110,7 +137,7 @@
 					if (msg != "succ") {
 						alert(resData);
 					} else {
-						alert("系统错误");
+						alert("提交成功");
 					}
 					location.reload();
 				}

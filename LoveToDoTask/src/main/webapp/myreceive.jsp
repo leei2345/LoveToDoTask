@@ -12,8 +12,11 @@
 	<meta content="black" name="apple-mobile-web-app-status-bar-style" />
 	<meta content="telephone=no" name="format-detection" />
 	<link rel="stylesheet" type="text/css" href="css/touch.css" />
+	<link rel="stylesheet" type="text/css" href="css/weui.css" />
  	<style> 
-	#headimg{width:60px; height:60px} 
+		#headimg{width:60px; height:60px} 
+	.taskform{MARGIN-RIGHT: auto;MARGIN-LEFT: auto;vertical-align:middle;}
+	.tasktable{width:100%; height:100%; border-collapse:collapse;border:1px solid #F00; border-spacing:5px;}
 	</style>
 	<title>love_to_task</title>
 	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
@@ -55,6 +58,10 @@
 		$("b#score").text(score);
 		$("a#score").attr("href","scorehis.jsp?uinfo=" + uinfo);
 		$("a#mytask").attr("href","mytask.jsp?uinfo=" + uinfo);
+		$("a#myreceive").attr("href","myreceive.jsp?uinfo=" + uinfo);
+		
+		
+		
 	});
 
 </script>
@@ -68,36 +75,37 @@
 	<div class="menu">
 		<ul>
 			<li><span><img id="headimg" src="img/head.jpg" /></span></li>
-			<li><span><a id="mytask">用户昵称<br/><b id="nickname"></b><br /><b>我的任务</b></a></span></li>
-			<li style="width: 34%"><span><a id="score" href="">当前积分<br /><b id="score">0</b><br/><b>积分历史</b></a></span></li>
+			<li><span><a class="weui_cell_bd weui_cell_primary">用户昵称<br/><b id="nickname"></b></a></span></li>
+			<li><span><a class="weui_cell_bd weui_cell_primary">当前积分<br /><b id="score">0</b></a></span></li>
+		</ul>
+		<ul>
+			<li><a id="myreceive" class="weui_cell_bd weui_cell_primary">领取的任务</a></li>
+			<li><a id="mytask" class="weui_cell_bd weui_cell_primary">发布的任务</a></li>
+			<li><a id="score" class="weui_cell_bd weui_cell_primary">积分历史</a></li>
 		</ul>
 	</div>
 	<br />
 	<br />
-	<br />
-	<br />
-	<br />
-	<div class="newbox" id="slider1">
-		<a href="makeScore.jsp" class="go_btn">赚积分</a>
+	<div class="newbox" id="slider4">
+		<p>我申请的任务(未完成的)</p>
 	</div>
-	<br />
-	<br />
-	<br />
-	<br />
-	<br />
 
-	<div class="newbox" id="slider4">
-		<a href="makeTask.jsp" class="go_btn">发任务</a>
+	<div class="newrow">
+    <div class="newbox" id="slider1">
+    <div class="taskform">
+  	  <br/>
+               	<table class="tasktable" border="1" bordercolor="red" >
+               	<tbody id="tasklist">
+               		<tr><td><p>用户昵称</p></td><td><p>app</p></td><td><p>搜索关键词</p></td><td><p>评论关键词</p></td><td><p>领取时间</p></td><td><p>提交审核</p></td></tr>
+               	</tbody>
+               	</table>
+    </div>
+    <div class="newbox">
+		 <a onclick="getTaskList()" class="weui_btn weui_btn_warn">查看更多</a>
 	</div>
-	<br />
-	<br />
-	<br />
-	<br />
-	<br />
-	<div class="newbox" id="slider4">
-		<a href="checkTask.jsp" class="go_btn">审核</a>
-	</div>
-	<br />
+    </div>
+
+</div>
 	<br />
 	<br />
 	<br />
